@@ -1,3 +1,5 @@
 {
-  "name": "TheOwls RESTAPI Feed"
+  "name": "TheOwls RESTAPI Feed",
+  "content_in_root": false,
+  "render_readme": true
 }

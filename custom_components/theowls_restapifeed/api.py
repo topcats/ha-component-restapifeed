@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from aiohttp import web
 
-from homeassistant.components.http import HomeAssistantView
+from homeassistant.helpers.http import HomeAssistantView
+# from homeassistant.exceptions import Unauthorized, UnknownUser
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import (
     area_registry,
@@ -61,7 +62,7 @@ class RestApiFeedFloorsView(HomeAssistantView):
 
     url = "/api/restapifeed/floors"
     name = "api:restapifeed:floors"
-    requires_auth = True
+    requires_auth = False
     hass: HomeAssistant
 
     async def get(self, request: web.Request) -> web.Response:
