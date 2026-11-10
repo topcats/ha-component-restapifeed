@@ -1,4 +1,4 @@
-# ![Logo](https://raw.githubusercontent.com/topcats/ha-component-restapifeed/main/custom_components/theowls_restapifeed/brand/icon.png){height=24} TheOwls RESTAPI Feed (Home Assistant Integration)
+# ![Logo](https://raw.githubusercontent.com/topcats/ha-component-restapifeed/main/readicon.png) TheOwls RESTAPI Feed (Home Assistant Integration)
 
 A Home Assistant custom integration that exposes registered devices, their labels, and their assigned areas (rooms) through a read-only REST endpoint.
 
