@@ -4,7 +4,7 @@ A Home Assistant custom integration that exposes registered devices, their label
 
 ## Installation
 
-In HACS, add `https://github.com/topcats/ha-component-restapifeed` as a custom repository with the **Integration** category, then install **TheOwls RESTAPI Feed**. Alternatively, copy `custom_components/restapifeed` into the `custom_components` directory in your Home Assistant configuration directory and add this to `configuration.yaml`:
+In HACS, add `https://github.com/topcats/ha-component-restapifeed` as a custom repository with the **Integration** category, then install **TheOwls RESTAPI Feed**. Alternatively, copy `custom_components/theowls_restapifeed` into the `custom_components` directory in your Home Assistant configuration directory and add this to `configuration.yaml`:
 
 ```yaml
 restapifeed:
