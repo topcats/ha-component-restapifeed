@@ -11,6 +11,8 @@ from .api import RestApiFeedDevicesView, RestApiFeedFloorsView
 
 _LOGGER = logging.getLogger(__name__)
 
+DOMAIN = "theowls_restapifeed"
+
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the REST API feed integration."""
     _LOGGER.info("TheOwls RESTAPI feed: integration starting")
@@ -18,3 +20,4 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.http.register_view(RestApiFeedDevicesView)
     hass.http.register_view(RestApiFeedFloorsView)
     return True
+
