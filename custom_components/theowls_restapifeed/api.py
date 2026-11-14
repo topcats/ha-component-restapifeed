@@ -2,17 +2,21 @@
 
 from __future__ import annotations
 
+import logging
+
 from aiohttp import web
 
-from homeassistant.helpers.http import HomeAssistantView
+from homeassistant.helpers.http import KEY_HASS, HomeAssistantView
 # from homeassistant.exceptions import Unauthorized, UnknownUser
-from homeassistant.core import HomeAssistant
 from homeassistant.helpers import (
     area_registry,
     device_registry,
     floor_registry,
     label_registry,
 )
+
+_LOGGER = logging.getLogger(__name__)
+
 
 
 class RestApiFeedDevicesView(HomeAssistantView):
@@ -21,13 +25,15 @@ class RestApiFeedDevicesView(HomeAssistantView):
     url = "/api/restapifeed/devices"
     name = "api:restapifeed:devices"
     requires_auth = True
-    hass: HomeAssistant
 
     async def get(self, request: web.Request) -> web.Response:
         """Return device registry data as JSON."""
-        devices = device_registry.async_get(self.hass)
-        areas = area_registry.async_get(self.hass)
-        labels = label_registry.async_get(self.hass)
+        _LOGGER.info("TheOwls RESTAPI feed: Devices API called")
+
+        hass = request.app[KEY_HASS]
+        devices = device_registry.async_get(hass)
+        areas = area_registry.async_get(hass)
+        labels = label_registry.async_get(hass)
 
         result = []
         for device in devices.devices.values():
@@ -57,36 +63,59 @@ class RestApiFeedDevicesView(HomeAssistantView):
         return self.json({"devices": result})
 
 
+
 class RestApiFeedFloorsView(HomeAssistantView):
     """Return floors with their assigned areas."""
 
     url = "/api/restapifeed/floors"
     name = "api:restapifeed:floors"
-    requires_auth = False
-    hass: HomeAssistant
+    requires_auth = True
 
     async def get(self, request: web.Request) -> web.Response:
         """Return floor names, levels, and areas as JSON."""
-        floors = floor_registry.async_get(self.hass)
-        areas = area_registry.async_get(self.hass)
+        _LOGGER.info("TheOwls RESTAPI feed: Floors API called")
 
-        result = []
+        hass = request.app[KEY_HASS]
+        floors = floor_registry.async_get(hass)
+        areas = area_registry.async_get(hass)
+
+        # Build a list of floors with their areas
+        result_floors = []
         for floor in floors.floors.values():
             floor_areas = area_registry.async_entries_for_floor(
                 areas, floor.floor_id
             )
-            result.append(
+            result_floors.append(
                 {
+                    "id": floor.floor_id,
                     "name": floor.name,
                     "level": floor.level,
+                    "icon": floor.icon,
                     "areas": [
-                        {"id": area.id, "name": area.name}
+                        {
+                            "id": area.id, 
+                            "name": area.name,
+                            "icon": area.icon,
+                            "picture": area.picture
+                        }
                         for area in sorted(
                             floor_areas, key=lambda area: area.name.casefold()
                         )
                     ],
                 }
             )
+        result_floors.sort(key=lambda floor: floor["level"] if floor["level"] is not None else float("inf"))
 
-        result.sort(key=lambda floor: floor["name"].casefold())
-        return self.json({"floors": result})
+        # Build a list of areas that are not assigned to any floor
+        unassigned_areas = [
+            {
+                "id": area.id, 
+                "name": area.name,
+                "icon": area.icon,
+                "picture": area.picture
+            }
+            for area in areas.areas.values()
+            if area.floor_id is None
+        ]
+        # Return the result as JSON
+        return self.json({"floors": result_floors, "unassigned_areas": unassigned_areas})

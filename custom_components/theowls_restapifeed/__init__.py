@@ -20,4 +20,3 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.http.register_view(RestApiFeedDevicesView)
     hass.http.register_view(RestApiFeedFloorsView)
     return True
-
