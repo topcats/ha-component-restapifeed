@@ -53,26 +53,92 @@ Devices without an assigned area return `"area": null`; devices without labels r
 
 `GET /api/restapifeed/floors`
 
-Returns each floor's name, level, and assigned areas. Area entries include their registry ID and name; `level` is `null` when it is not set.
+Returns each floor's registry ID, name, level, icon, and assigned areas. Area entries include their registry ID, name, icon, picture, and matching sensor entity IDs. `level` and `icon` are `null` when they are not set. Areas without a floor are returned in `unassigned_areas`.
 
 ```json
 {
  "floors": [
   {
+   "id": "ground_floor",
    "name": "Ground floor",
    "level": 0,
+   "icon": "mdi:home",
    "areas": [
     {
      "id": "abcdef0123456789abcdef0123456789",
-     "name": "Hallway"
+     "name": "Hallway",
+     "icon": "mdi:door",
+     "picture": null,
+     "sensors": {
+      "temp": "sensor.hallway_temperature",
+      "lux": "sensor.hallway_illuminance",
+      "humid": "sensor.hallway_humidity",
+      "pir": "binary_sensor.hallway_motion",
+      "door": "binary_sensor.hallway_door"
+     }
     }
    ]
+  }
+ ],
+ "unassigned_areas": [
+  {
+   "id": "1234567890abcdef1234567890abcdef",
+   "name": "Garage",
+   "icon": "mdi:garage",
+   "picture": null,
+   "sensors": {
+    "temp": null,
+    "lux": null,
+    "humid": null,
+    "pir": "binary_sensor.garage_motion",
+    "door": null
+   }
+  }
+ ]
+}
+```
+
+### Single Floor Endpoint
+
+`GET /api/restapifeed/floors/{floor_id}`
+
+Returns the same fields as one floor in the floors list. The response is the
+floor object directly; an unknown `floor_id` returns `404`.
+
+```json
+{
+ "id": "ground_floor",
+ "name": "Ground floor",
+ "level": 0,
+ "icon": "mdi:home",
+ "areas": [
+  {
+   "id": "abcdef0123456789abcdef0123456789",
+   "name": "Hallway",
+   "icon": "mdi:door",
+   "picture": null,
+   "sensors": {
+    "temp": "sensor.hallway_temperature",
+    "lux": "sensor.hallway_illuminance",
+    "humid": "sensor.hallway_humidity",
+    "pir": "binary_sensor.hallway_motion",
+    "door": "binary_sensor.hallway_door"
+   }
   }
  ]
 }
 ```
 
 ## Versions
+
+### V0.1.2 (November 2026)
+
+- Working Readonly version
+- Can grab:
+  - Floors List
+  - Flour Item
+  - Devices List
+- Floors also includes the required sensors for each Area (room)
 
 ### V0.1.1 (November 2026)
 
