@@ -32,6 +32,7 @@ Example response:
   {
    "device_id": "0123456789abcdef0123456789abcdef",
    "name": "Hallway motion sensor",
+   "state": "on",
    "area": {
     "id": "abcdef0123456789abcdef0123456789",
     "name": "Hallway"
@@ -48,6 +49,7 @@ Example response:
 ```
 
 Devices without an assigned area return `"area": null`; devices without labels return an empty `labels` array. Labels include both registry ID and display name.
+The `state` field contains the current state of the first enabled entity associated with the device, or `null` when no associated entity has a state.
 
 ### Floors Endpoint
 
