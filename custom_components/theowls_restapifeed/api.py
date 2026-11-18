@@ -6,16 +6,55 @@ import logging
 
 from aiohttp import web
 
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.http import KEY_HASS, HomeAssistantView
 # from homeassistant.exceptions import Unauthorized, UnknownUser
 from homeassistant.helpers import (
     area_registry,
     device_registry,
+    entity_registry,
     floor_registry,
     label_registry,
 )
 
 _LOGGER = logging.getLogger(__name__)
+
+SENSOR_LABEL_DOMAINS = {
+    "temp": "sensor",
+    "lux": "sensor",
+    "humid": "sensor",
+    "pir": "binary_sensor",
+    "door": "binary_sensor",
+}
+
+
+
+def lookup_sensors(hass: HomeAssistant, area_id: str) -> dict[str, str | None]:
+    """Return one matching sensor entity ID for each label in an area."""
+    devices = device_registry.async_get(hass)
+    entities = entity_registry.async_get(hass)
+    result = {label: None for label in SENSOR_LABEL_DOMAINS}
+
+    for label, domain in SENSOR_LABEL_DOMAINS.items():
+        for device in sorted(devices.devices.values(), key=lambda item: item.id):
+            if device.area_id != area_id or label not in device.labels:
+                continue
+
+            matching_entities = sorted(
+                (
+                    entry
+                    for entry in entity_registry.async_entries_for_device(
+                        entities, device.id
+                    )
+                    if entry.domain == domain and entry.disabled_by is None
+                ),
+                key=lambda entry: entry.entity_id,
+            )
+            if matching_entities:
+                result[label] = matching_entities[0].entity_id
+            break
+
+    return result
 
 
 
@@ -96,7 +135,8 @@ class RestApiFeedFloorsView(HomeAssistantView):
                             "id": area.id, 
                             "name": area.name,
                             "icon": area.icon,
-                            "picture": area.picture
+                            "picture": area.picture,
+                            "sensors": lookup_sensors(hass, area.id)
                         }
                         for area in sorted(
                             floor_areas, key=lambda area: area.name.casefold()
@@ -112,10 +152,12 @@ class RestApiFeedFloorsView(HomeAssistantView):
                 "id": area.id, 
                 "name": area.name,
                 "icon": area.icon,
-                "picture": area.picture
+                "picture": area.picture,
+                "sensors": lookup_sensors(hass, area.id)
             }
             for area in areas.areas.values()
             if area.floor_id is None
         ]
         # Return the result as JSON
         return self.json({"floors": result_floors, "unassigned_areas": unassigned_areas})
+
