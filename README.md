@@ -30,8 +30,9 @@ Example response:
 {
  "devices": [
   {
-   "device_id": "0123456789abcdef0123456789abcdef",
-   "name": "Hallway motion sensor",
+   "entity_id": "binary_sensor.hallway_motion",
+   "type": "binary_sensor",
+   "name": "Hallway motion",
    "state": "on",
    "area": {
     "id": "abcdef0123456789abcdef0123456789",
@@ -48,8 +49,10 @@ Example response:
 }
 ```
 
-Devices without an assigned area return `"area": null`; devices without labels return an empty `labels` array. Labels include both registry ID and display name.
-The `state` field contains the current state of the first enabled entity associated with the device, or `null` when no associated entity has a state.
+Entities without an assigned area return `"area": null`; entities without labels return an empty `labels` array. Labels include both registry ID and display name.
+The `devices` array contains enabled Home Assistant entities rather than device registry entries. Each entity includes its entity ID, domain type, display name, current state, area, and labels. Area and labels inherited from a parent device are included; entity-specific labels are included too. The `state` and `area` fields are `null` when unavailable.
+
+Light entities may include `brightness`, `rgb_color`, `hs_color`, `xy_color`, and `color_temp_kelvin`. These fields contain the Home Assistant state attributes and are `null` when the active light mode does not provide that attribute.
 
 ### Floors Endpoint
 
