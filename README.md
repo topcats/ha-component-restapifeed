@@ -30,8 +30,16 @@ Example response:
 {
  "devices": [
   {
-   "device_id": "0123456789abcdef0123456789abcdef",
-   "name": "Hallway motion sensor",
+   "entity_id": "binary_sensor.hallway_motion",
+   "type": "binary_sensor",
+   "name": "Hallway motion",
+   "friendly_name": "Hallway motion",
+   "state": "on",
+   "icon": "mdi:motion-sensor",
+   "parent_device": {
+    "id": "0123456789abcdef0123456789abcdef",
+    "name": "Hallway motion sensor"
+   },
    "area": {
     "id": "abcdef0123456789abcdef0123456789",
     "name": "Hallway"
@@ -42,12 +50,49 @@ Example response:
      "name": "Battery powered"
     }
    ]
+  },
+  {
+   "entity_id": "light.living_room",
+   "type": "light",
+   "name": "Living Room",
+   "friendly_name": "Living Room",
+   "state": "on",
+   "icon": "mdi:lightbulb",
+   "parent_device": {
+    "id": "fedcba0987654321fedcba0987654321",
+    "name": "Living Room Light"
+   },
+   "area": {
+    "id": "abcdef0123456789abcdef0123456789",
+    "name": "Living Room"
+   },
+   "labels": [],
+   "brightness": 204,
+   "rgb_color": [255, 180, 90],
+   "hs_color": [32, 65],
+   "xy_color": [0.51, 0.41],
+   "color_temp_kelvin": null
   }
  ]
 }
 ```
 
-Devices without an assigned area return `"area": null`; devices without labels return an empty `labels` array. Labels include both registry ID and display name.
+Entities without an assigned area return `"area": null`; entities without labels return an empty `labels` array. Labels include both registry ID and display name.
+The `devices` array contains enabled Home Assistant entities rather than device registry entries. Each entity includes its entity ID, domain type, display name, friendly name, current state, icon, parent device ID and name, area, and labels. `friendly_name` is the value of the entity's Home Assistant state attribute, or `null` when no state or friendly name is available. The icon is the effective state icon when available, falling back to the entity registry icon; it is `null` when neither is set. `parent_device` and `area` are `null` when unavailable. Area and labels inherited from a parent device are included; entity-specific labels are included too. The `state` field is `null` when unavailable.
+
+Light entities include `color_temp_kelvin` (which is `null` when unavailable) and may include `brightness`, `rgb_color`, `hs_color`, and `xy_color` when Home Assistant provides those state attributes.
+
+### Single Entity Endpoint
+
+`GET /api/restapifeed/devices/{entity_id}`
+
+Returns the same entity object as an item in the devices list. For example:
+
+```http
+GET /api/restapifeed/devices/light.living_room
+```
+
+An unknown or disabled entity returns `404`.
 
 ### Floors Endpoint
 

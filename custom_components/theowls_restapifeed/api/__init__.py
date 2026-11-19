@@ -1,10 +1,11 @@
 """HTTP API views for the integration."""
 
-from .devices import RestApiFeedDevicesView
+from .devices import RestApiFeedDeviceItem, RestApiFeedDevicesList
 from .floors import RestApiFeedFloorsItem, RestApiFeedFloorsList
 
 __all__ = [
-    "RestApiFeedDevicesView",
+    "RestApiFeedDeviceItem",
+    "RestApiFeedDevicesList",
     "RestApiFeedFloorsItem",
     "RestApiFeedFloorsList",
 ]
