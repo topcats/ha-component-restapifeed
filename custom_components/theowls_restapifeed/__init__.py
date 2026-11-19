@@ -8,10 +8,12 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.typing import ConfigType
 
 from .api import (
+    RestApiFeedAreaList,
+    RestApiFeedAreaItem,
+    RestApiFeedDeviceList,
     RestApiFeedDeviceItem,
-    RestApiFeedDevicesList,
-    RestApiFeedFloorsItem,
-    RestApiFeedFloorsList,
+    RestApiFeedFloorList,
+    RestApiFeedFloorItem,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -22,8 +24,10 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the REST API feed integration."""
     _LOGGER.info("TheOwls RESTAPI feed: integration starting")
 
+    hass.http.register_view(RestApiFeedAreaList)
+    hass.http.register_view(RestApiFeedAreaItem)
+    hass.http.register_view(RestApiFeedDeviceList)
     hass.http.register_view(RestApiFeedDeviceItem)
-    hass.http.register_view(RestApiFeedDevicesList)
-    hass.http.register_view(RestApiFeedFloorsItem)
-    hass.http.register_view(RestApiFeedFloorsList)
+    hass.http.register_view(RestApiFeedFloorList)
+    hass.http.register_view(RestApiFeedFloorItem)
     return True

@@ -108,7 +108,7 @@ def _entity_data(
 
 
 
-class RestApiFeedDevicesList(HomeAssistantView):
+class RestApiFeedDeviceList(HomeAssistantView):
     """Return registered entities with their state, labels, and area."""
 
     url = "/api/restapifeed/devices"

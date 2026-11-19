@@ -94,6 +94,45 @@ GET /api/restapifeed/devices/light.living_room
 
 An unknown or disabled entity returns `404`.
 
+### Areas Endpoint
+
+`GET /api/restapifeed/areas`
+
+Returns all areas, including their ID, name, icon, picture, assigned floor (or `null`), sensor IDs, and IDs of enabled entities assigned to each area. Entity-specific area assignments take precedence over the parent device's area.
+
+```json
+{
+ "areas": [
+  {
+   "id": "abcdef0123456789abcdef0123456789",
+   "name": "Hallway",
+   "icon": "mdi:door",
+   "picture": null,
+   "floor": {
+    "id": "ground_floor",
+    "name": "Ground floor",
+    "level": 0
+   },
+   "sensors": {
+    "temp": "sensor.hallway_temperature",
+    "lux": null,
+    "humid": null,
+    "pir": "binary_sensor.hallway_motion",
+    "door": null
+   },
+   "entity_ids": [
+    "binary_sensor.hallway_motion",
+    "sensor.hallway_temperature"
+   ]
+  }
+ ]
+}
+```
+
+`GET /api/restapifeed/areas/{area_id}`
+
+Returns one area with the same area information, plus an `entities` array containing full entity objects for each enabled entity in that area. Each object matches the devices endpoint response format. An unknown `area_id` returns `404`.
+
 ### Floors Endpoint
 
 `GET /api/restapifeed/floors`

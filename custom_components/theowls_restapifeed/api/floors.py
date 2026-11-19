@@ -76,7 +76,7 @@ def _floor_data(hass: HomeAssistant, floor, areas) -> dict[str, object]:
 
 
 
-class RestApiFeedFloorsList(HomeAssistantView):
+class RestApiFeedFloorList(HomeAssistantView):
     """Return floors with their assigned areas."""
 
     url = "/api/restapifeed/floors"
@@ -120,7 +120,7 @@ class RestApiFeedFloorsList(HomeAssistantView):
 
 
 
-class RestApiFeedFloorsItem(HomeAssistantView):
+class RestApiFeedFloorItem(HomeAssistantView):
     """Return one floor with its assigned areas."""
 
     url = "/api/restapifeed/floors/{floor_id}"
