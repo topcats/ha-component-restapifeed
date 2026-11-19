@@ -82,6 +82,18 @@ The `devices` array contains enabled Home Assistant entities rather than device 
 
 Light entities include `color_temp_kelvin` (which is `null` when unavailable) and may include `brightness`, `rgb_color`, `hs_color`, and `xy_color` when Home Assistant provides those state attributes.
 
+### Single Entity Endpoint
+
+`GET /api/restapifeed/devices/{entity_id}`
+
+Returns the same entity object as an item in the devices list. For example:
+
+```http
+GET /api/restapifeed/devices/light.living_room
+```
+
+An unknown or disabled entity returns `404`.
+
 ### Floors Endpoint
 
 `GET /api/restapifeed/floors`
