@@ -94,7 +94,7 @@ GET /api/restapifeed/devices/light.living_room
 
 An unknown or disabled entity returns `404`.
 
-`PUT /api/restapifeed/devices/{entity_id}` accepts a required string `state` and optional `attributes` object:
+`PUT /api/restapifeed/devices/{entity_id}` calls the entity domain's `turn_on` or `turn_off` service. The required `state` must be `"on"` or `"off"`. Light entities may also receive `brightness`, `color_temp_kelvin`, `effect`, `hs_color`, `rgb_color`, or `xy_color` service attributes when turning on:
 
 ```json
 {
@@ -105,7 +105,7 @@ An unknown or disabled entity returns `404`.
 }
 ```
 
-The response is the updated entity object. If `attributes` is omitted, the current attributes are preserved; if supplied, they replace the current attributes. This updates Home Assistant's state machine only; it does not call the entity's integration or control the physical device.
+The response contains the entity's latest state after the service call. Unsupported domains or attributes return `400`; unknown or disabled entities return `404`. These service calls control the entity through its Home Assistant integration, unlike direct state-machine updates.
 
 ### Areas Endpoint
 

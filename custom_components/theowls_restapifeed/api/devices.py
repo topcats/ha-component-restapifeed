@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 
 from aiohttp import web
 
-from homeassistant.core import HomeAssistant
+from homeassistant.core import Context, HomeAssistant
+from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import (
     area_registry,
     device_registry,
@@ -18,12 +20,21 @@ from homeassistant.helpers.http import KEY_HASS, HomeAssistantView
 
 _LOGGER = logging.getLogger(__name__)
 
+LIGHT_CONTROL_ATTRIBUTES = {
+    "brightness",
+    "color_temp_kelvin",
+    "effect",
+    "hs_color",
+    "rgb_color",
+    "xy_color",
+}
+
 
 def _entity_data(
     hass: HomeAssistant, entry, devices, areas, labels
 ) -> dict[str, object]:
     """Return one entity's registry and state data."""
-    device = devices.devices.get(entry.device_id) if entry.device_id else None
+    device = devices.async_get(entry.device_id) if entry.device_id else None
     entity_area_id = getattr(entry, "area_id", None)
     if not entity_area_id and device:
         entity_area_id = device.area_id
@@ -179,10 +190,12 @@ class RestApiFeedDeviceItem(HomeAssistantView):
         entities = entity_registry.async_get(hass)
         labels = label_registry.async_get(hass)
 
+        # Validate entity exists and is enabled
         entry = entities.entities.get(entity_id)
         if entry is None or entry.disabled_by is not None:
             raise web.HTTPNotFound()
 
+        # Validate request body is valid JSON and contains only 'state' and 'attributes'
         try:
             payload = await request.json()
         except json.JSONDecodeError as err:
@@ -191,31 +204,57 @@ class RestApiFeedDeviceItem(HomeAssistantView):
             ) from err
 
         if not isinstance(payload, dict):
-            raise web.HTTPBadRequest(
-                text="Request body must be a JSON object."
-            )
+            raise web.HTTPBadRequest(text="Request body must be a JSON object.")
         if set(payload) - {"state", "attributes"}:
-            raise web.HTTPBadRequest(
-                text="Only 'state' and 'attributes' are supported."
-            )
+            raise web.HTTPBadRequest(text="Only 'state' and 'attributes' are supported.")
 
         new_state = payload.get("state")
-        if not isinstance(new_state, str):
-            raise web.HTTPBadRequest(
-                text="'state' is required and must be a string."
-            )
+        if not isinstance(new_state, str) or new_state not in {"on", "off"}:
+            raise web.HTTPBadRequest(text="'state' must be either 'on' or 'off'.")
 
-        current_state = hass.states.get(entity_id)
         if "attributes" in payload:
             attributes = payload["attributes"]
             if not isinstance(attributes, dict):
-                raise web.HTTPBadRequest(
-                    text="'attributes' must be a JSON object when provided."
-                )
+                raise web.HTTPBadRequest(text="'attributes' must be a JSON object when provided.")
         else:
-            attributes = (
-                dict(current_state.attributes) if current_state else {}
-            )
+            attributes = {}
 
-        hass.states.async_set(entity_id, new_state, attributes)
+        service = f"turn_{new_state}"
+        service_data = {"entity_id": entity_id}
+        if entry.domain == "light":
+            unsupported_attributes = set(attributes) - LIGHT_CONTROL_ATTRIBUTES
+            if unsupported_attributes:
+                raise web.HTTPBadRequest(text=("Unsupported light attributes:, ".join(sorted(unsupported_attributes))))
+            # if new_state == "off" and attributes:
+            #     raise web.HTTPBadRequest(
+            #         text="Light attributes can only be supplied when turning on."
+            #     )
+            if new_state == "on":
+                service_data.update(attributes)
+        elif attributes:
+            raise web.HTTPBadRequest(text="Attributes can only be supplied for light entities.")
+
+        if not hass.services.has_service(entry.domain, service):
+            raise web.HTTPBadRequest(
+                text=(f"Entity domain '{entry.domain}' does not support '{service}'."))
+
+        # Call the appropriate service to change the entity's state and attributes
+        try:
+            await hass.services.async_call(
+                entry.domain,
+                service,
+                service_data,
+                blocking=True,
+                context=Context(user_id=request["hass_user"].id),
+            )
+        except ServiceValidationError as err:
+            raise web.HTTPBadRequest(text=str(err)) from err
+
+        # Update the entity state in Home Assistant to reflect the change
+        await asyncio.sleep(0.5)  # Allow time for the state to update
+        await hass.services.async_call(
+            "homeassistant",
+            "update_entity",
+            {"entity_id": entity_id}
+        )
         return self.json(_entity_data(hass, entry, devices, areas, labels))
