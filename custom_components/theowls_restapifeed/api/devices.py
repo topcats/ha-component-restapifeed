@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 
 from aiohttp import web
@@ -115,6 +116,7 @@ class RestApiFeedDeviceList(HomeAssistantView):
     name = "api:restapifeed:devices"
     requires_auth = True
 
+
     async def get(self, request: web.Request) -> web.Response:
         """Return entity registry data as JSON."""
         _LOGGER.info("TheOwls RESTAPI feed: Devices API called")
@@ -149,6 +151,7 @@ class RestApiFeedDeviceItem(HomeAssistantView):
     name = "api:restapifeed:devices:item"
     requires_auth = True
 
+
     async def get(self, request: web.Request, entity_id: str) -> web.Response:
         """Return one entity's data as JSON."""
         _LOGGER.info("TheOwls RESTAPI feed: Device entity API called. Entity ID: %s", entity_id)
@@ -163,4 +166,56 @@ class RestApiFeedDeviceItem(HomeAssistantView):
         if entry is None or entry.disabled_by is not None:
             raise web.HTTPNotFound()
 
+        return self.json(_entity_data(hass, entry, devices, areas, labels))
+
+
+    async def put(self, request: web.Request, entity_id: str) -> web.Response:
+        """Set an entity's state and optionally its attributes."""
+        _LOGGER.info("TheOwls RESTAPI feed: Device entity state update requested. Entity ID: %s", entity_id)
+
+        hass = request.app[KEY_HASS]
+        devices = device_registry.async_get(hass)
+        areas = area_registry.async_get(hass)
+        entities = entity_registry.async_get(hass)
+        labels = label_registry.async_get(hass)
+
+        entry = entities.entities.get(entity_id)
+        if entry is None or entry.disabled_by is not None:
+            raise web.HTTPNotFound()
+
+        try:
+            payload = await request.json()
+        except json.JSONDecodeError as err:
+            raise web.HTTPBadRequest(
+                text="Request body must contain valid JSON."
+            ) from err
+
+        if not isinstance(payload, dict):
+            raise web.HTTPBadRequest(
+                text="Request body must be a JSON object."
+            )
+        if set(payload) - {"state", "attributes"}:
+            raise web.HTTPBadRequest(
+                text="Only 'state' and 'attributes' are supported."
+            )
+
+        new_state = payload.get("state")
+        if not isinstance(new_state, str):
+            raise web.HTTPBadRequest(
+                text="'state' is required and must be a string."
+            )
+
+        current_state = hass.states.get(entity_id)
+        if "attributes" in payload:
+            attributes = payload["attributes"]
+            if not isinstance(attributes, dict):
+                raise web.HTTPBadRequest(
+                    text="'attributes' must be a JSON object when provided."
+                )
+        else:
+            attributes = (
+                dict(current_state.attributes) if current_state else {}
+            )
+
+        hass.states.async_set(entity_id, new_state, attributes)
         return self.json(_entity_data(hass, entry, devices, areas, labels))

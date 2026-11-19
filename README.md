@@ -94,6 +94,19 @@ GET /api/restapifeed/devices/light.living_room
 
 An unknown or disabled entity returns `404`.
 
+`PUT /api/restapifeed/devices/{entity_id}` accepts a required string `state` and optional `attributes` object:
+
+```json
+{
+ "state": "on",
+ "attributes": {
+  "brightness": 180
+ }
+}
+```
+
+The response is the updated entity object. If `attributes` is omitted, the current attributes are preserved; if supplied, they replace the current attributes. This updates Home Assistant's state machine only; it does not call the entity's integration or control the physical device.
+
 ### Areas Endpoint
 
 `GET /api/restapifeed/areas`
