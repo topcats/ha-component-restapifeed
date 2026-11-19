@@ -81,7 +81,25 @@ class RestApiFeedDevicesView(HomeAssistantView):
                     or (state.name if state else None)
                     or entry.entity_id
                 ),
+                "friendly_name": (
+                    state.attributes.get("friendly_name") if state else None
+                ),
                 "state": state.state if state else None,
+                "icon": (
+                    (state.attributes.get("icon") if state else None)
+                    or entry.icon
+                    or getattr(entry, "original_icon", None)
+                ),
+                "parent_device": (
+                    {
+                        "id": device.id,
+                        "name": (
+                            device.name_by_user or device.name or device.id
+                        ),
+                    }
+                    if device
+                    else None
+                ),
                 "area": (
                     {"id": entity_area.id, "name": entity_area.name}
                     if entity_area
@@ -90,15 +108,31 @@ class RestApiFeedDevicesView(HomeAssistantView):
                 "labels": entity_labels,
             }
 
+            if state and state.attributes.get("device_class"):
+                entity_data["device_class"] = state.attributes.get("device_class")
+
+            if state and state.attributes.get("entity_picture"):
+                entity_data["entity_picture"] = state.attributes.get("entity_picture")
+
+            if state and state.attributes.get("unit_of_measurement"):
+                entity_data["unit_of_measurement"] = state.attributes.get("unit_of_measurement")
+
             if entry.domain == "light" and state is not None:
                 attributes = state.attributes
-                entity_data["brightness"] = attributes.get("brightness")
-                entity_data["rgb_color"] = attributes.get("rgb_color")
-                entity_data["hs_color"] = attributes.get("hs_color")
-                entity_data["xy_color"] = attributes.get("xy_color")
-                entity_data["color_temp_kelvin"] = attributes.get(
-                    "color_temp_kelvin"
-                )
+                if "effect" in attributes:
+                    entity_data["effect"] = attributes.get("effect")
+                if "effect_list" in attributes:
+                    entity_data["effect_list"] = attributes.get("effect_list")
+                if "brightness" in attributes:
+                    entity_data["brightness"] = attributes.get("brightness")
+                if "rgb_color" in attributes:
+                    entity_data["rgb_color"] = attributes.get("rgb_color")
+                if "hs_color" in attributes:
+                    entity_data["hs_color"] = attributes.get("hs_color")
+                if "xy_color" in attributes:
+                    entity_data["xy_color"] = attributes.get("xy_color")
+                if "color_temp_kelvin" in attributes:
+                    entity_data["color_temp_kelvin"] = attributes.get("color_temp_kelvin")
 
             result.append(entity_data)
 
