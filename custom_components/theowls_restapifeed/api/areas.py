@@ -16,17 +16,29 @@ from homeassistant.helpers import (
 from homeassistant.helpers.http import KEY_HASS, HomeAssistantView
 
 from .devices import _entity_data
-from .floors import lookup_sensors
+from .floors import SENSOR_LABEL_DOMAINS
 
 _LOGGER = logging.getLogger(__name__)
 
 
-def _area_entities(area_id, devices, entities):
-    """Return enabled entity registry entries assigned to an area."""
-    result = []
-    for entry in entities.entities.values():
-        if entry.disabled_by is not None:
-            continue
+def _area_indexes(area_ids, devices, entities):
+    """Index enabled entities and sensor IDs by area in linear passes."""
+    entities_by_area = {area_id: [] for area_id in area_ids}
+    sensors_by_area = {
+        area_id: {label: None for label in SENSOR_LABEL_DOMAINS}
+        for area_id in area_ids
+    }
+    selected_sensor_labels = {area_id: set() for area_id in area_ids}
+    entities_by_device = {}
+
+    enabled_entities = (
+        entry
+        for entry in entities.entities.values()
+        if entry.disabled_by is None
+    )
+    for entry in sorted(enabled_entities, key=lambda item: item.entity_id):
+        if entry.device_id:
+            entities_by_device.setdefault(entry.device_id, []).append(entry)
 
         device = (
             devices.devices.get(entry.device_id)
@@ -36,10 +48,34 @@ def _area_entities(area_id, devices, entities):
         entity_area_id = getattr(entry, "area_id", None)
         if not entity_area_id and device:
             entity_area_id = device.area_id
-        if entity_area_id == area_id:
-            result.append(entry)
+        if entity_area_id in entities_by_area:
+            entities_by_area[entity_area_id].append(entry)
 
-    return sorted(result, key=lambda entry: entry.entity_id)
+    for device in sorted(devices.devices.values(), key=lambda item: item.id):
+        area_id = device.area_id
+        if area_id not in sensors_by_area:
+            continue
+
+        for label, domain in SENSOR_LABEL_DOMAINS.items():
+            if (
+                label not in device.labels
+                or label in selected_sensor_labels[area_id]
+            ):
+                continue
+
+            selected_sensor_labels[area_id].add(label)
+            matching_entity = next(
+                (
+                    entry
+                    for entry in entities_by_device.get(device.id, ())
+                    if entry.domain == domain
+                ),
+                None,
+            )
+            if matching_entity is not None:
+                sensors_by_area[area_id][label] = matching_entity.entity_id
+
+    return entities_by_area, sensors_by_area
 
 
 def _area_data(area, floors) -> dict[str, object]:
@@ -80,15 +116,18 @@ class RestApiFeedAreaList(HomeAssistantView):
         entities = entity_registry.async_get(hass)
         floors = floor_registry.async_get(hass)
 
+        area_ids = set(areas.areas)
+        entities_by_area, sensors_by_area = _area_indexes(
+            area_ids, devices, entities
+        )
         result = []
         for area in sorted(
             areas.areas.values(), key=lambda item: item.name.casefold()
         ):
             area_data = _area_data(area, floors)
-            area_data["sensors"] = lookup_sensors(hass, area.id)
+            area_data["sensors"] = sensors_by_area[area.id]
             area_data["entity_ids"] = [
-                entry.entity_id
-                for entry in _area_entities(area.id, devices, entities)
+                entry.entity_id for entry in entities_by_area[area.id]
             ]
             result.append(area_data)
 
@@ -120,10 +159,13 @@ class RestApiFeedAreaItem(HomeAssistantView):
         floors = floor_registry.async_get(hass)
         labels = label_registry.async_get(hass)
 
+        entities_by_area, sensors_by_area = _area_indexes(
+            {area.id}, devices, entities
+        )
         area_data = _area_data(area, floors)
-        area_data["sensors"] = lookup_sensors(hass, area.id)
+        area_data["sensors"] = sensors_by_area[area.id]
         area_data["entities"] = [
             _entity_data(hass, entry, devices, areas, labels)
-            for entry in _area_entities(area.id, devices, entities)
+            for entry in entities_by_area[area.id]
         ]
         return self.json(area_data)
