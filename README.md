@@ -94,6 +94,58 @@ GET /api/restapifeed/devices/light.living_room
 
 An unknown or disabled entity returns `404`.
 
+`PUT /api/restapifeed/devices/{entity_id}` calls the entity domain's `turn_on` or `turn_off` service. The required `state` must be `"on"` or `"off"`. Light entities may also receive `brightness`, `color_temp_kelvin`, `effect`, `hs_color`, `rgb_color`, or `xy_color` service attributes when turning on:
+
+```json
+{
+ "state": "on",
+ "attributes": {
+  "brightness": 180
+ }
+}
+```
+
+The response contains the entity's latest state after the service call. Unsupported domains or attributes return `400`; unknown or disabled entities return `404`. These service calls control the entity through its Home Assistant integration, unlike direct state-machine updates.
+
+### Areas Endpoint
+
+`GET /api/restapifeed/areas`
+
+Returns all areas, including their ID, name, icon, picture, assigned floor (or `null`), sensor IDs, and IDs of enabled entities assigned to each area. Entity-specific area assignments take precedence over the parent device's area.
+
+```json
+{
+ "areas": [
+  {
+   "id": "abcdef0123456789abcdef0123456789",
+   "name": "Hallway",
+   "icon": "mdi:door",
+   "picture": null,
+   "floor": {
+    "id": "ground_floor",
+    "name": "Ground floor",
+    "level": 0
+   },
+   "sensors": {
+    "temp": "sensor.hallway_temperature",
+    "lux": null,
+    "hum": null,
+    "pir": "binary_sensor.hallway_motion",
+    "door": null
+   },
+   "entity_ids": [
+    "binary_sensor.hallway_motion",
+    "sensor.hallway_temperature"
+   ]
+  }
+ ]
+}
+```
+
+`GET /api/restapifeed/areas/{area_id}`
+
+Returns one area with the same area information, plus an `entities` array containing full entity objects for each enabled entity in that area. Each object matches the devices endpoint response format. An unknown `area_id` returns `404`.
+
 ### Floors Endpoint
 
 `GET /api/restapifeed/floors`
@@ -117,7 +169,7 @@ Returns each floor's registry ID, name, level, icon, and assigned areas. Area en
      "sensors": {
       "temp": "sensor.hallway_temperature",
       "lux": "sensor.hallway_illuminance",
-      "humid": "sensor.hallway_humidity",
+      "hum": "sensor.hallway_humidity",
       "pir": "binary_sensor.hallway_motion",
       "door": "binary_sensor.hallway_door"
      }
@@ -134,7 +186,7 @@ Returns each floor's registry ID, name, level, icon, and assigned areas. Area en
    "sensors": {
     "temp": null,
     "lux": null,
-    "humid": null,
+    "hum": null,
     "pir": "binary_sensor.garage_motion",
     "door": null
    }
@@ -165,7 +217,7 @@ floor object directly; an unknown `floor_id` returns `404`.
    "sensors": {
     "temp": "sensor.hallway_temperature",
     "lux": "sensor.hallway_illuminance",
-    "humid": "sensor.hallway_humidity",
+    "hum": "sensor.hallway_humidity",
     "pir": "binary_sensor.hallway_motion",
     "door": "binary_sensor.hallway_door"
    }
@@ -176,12 +228,21 @@ floor object directly; an unknown `floor_id` returns `404`.
 
 ## Versions
 
+### V0.1.3 (November 2026)
+
+- Update Device Verions
+- Fix to Humid sensor name
+- Can now grab:
+  - Areas List
+  - Area Item
+  - Device Item
+
 ### V0.1.2 (November 2026)
 
 - Working Readonly version
 - Can grab:
   - Floors List
-  - Flour Item
+  - Floor Item
   - Devices List
 - Floors also includes the required sensors for each Area (room)
 
