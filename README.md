@@ -129,7 +129,7 @@ Returns all areas, including their ID, name, icon, picture, assigned floor (or `
    "sensors": {
     "temp": "sensor.hallway_temperature",
     "lux": null,
-    "humid": null,
+    "hum": null,
     "pir": "binary_sensor.hallway_motion",
     "door": null
    },
@@ -169,7 +169,7 @@ Returns each floor's registry ID, name, level, icon, and assigned areas. Area en
      "sensors": {
       "temp": "sensor.hallway_temperature",
       "lux": "sensor.hallway_illuminance",
-      "humid": "sensor.hallway_humidity",
+      "hum": "sensor.hallway_humidity",
       "pir": "binary_sensor.hallway_motion",
       "door": "binary_sensor.hallway_door"
      }
@@ -186,7 +186,7 @@ Returns each floor's registry ID, name, level, icon, and assigned areas. Area en
    "sensors": {
     "temp": null,
     "lux": null,
-    "humid": null,
+    "hum": null,
     "pir": "binary_sensor.garage_motion",
     "door": null
    }
@@ -217,7 +217,7 @@ floor object directly; an unknown `floor_id` returns `404`.
    "sensors": {
     "temp": "sensor.hallway_temperature",
     "lux": "sensor.hallway_illuminance",
-    "humid": "sensor.hallway_humidity",
+    "hum": "sensor.hallway_humidity",
     "pir": "binary_sensor.hallway_motion",
     "door": "binary_sensor.hallway_door"
    }
