@@ -228,12 +228,21 @@ floor object directly; an unknown `floor_id` returns `404`.
 
 ## Versions
 
+### V0.1.3 (November 2026)
+
+- Update Device Verions
+- Fix to Humid sensor name
+- Can now grab:
+  - Areas List
+  - Area Item
+  - Device Item
+
 ### V0.1.2 (November 2026)
 
 - Working Readonly version
 - Can grab:
   - Floors List
-  - Flour Item
+  - Floor Item
   - Devices List
 - Floors also includes the required sensors for each Area (room)
 

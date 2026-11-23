@@ -20,7 +20,7 @@ _LOGGER = logging.getLogger(__name__)
 SENSOR_LABEL_DOMAINS = {
     "temp": "sensor",
     "lux": "sensor",
-    "humid": "sensor",
+    "hum": "sensor",
     "pir": "binary_sensor",
     "door": "binary_sensor",
 }
